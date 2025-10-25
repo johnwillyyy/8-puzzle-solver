@@ -2,13 +2,18 @@
 #define DFS_H
 
 #include <vector>
+#include "search_result.h"
 
-std::vector<int> dfs(int initial_state, int goal_state);
-int dfs(
+SearchResult dfs(int initial_state, int goal_state);
+
+int dfs_recursive(
     int current_state,
-    int goal_state, 
-    std::vector<bool> &vis, 
-    std::vector<int> &parent
+    int goal_state,
+    std::vector<bool> &vis,
+    std::vector<int> &parent,
+    int depth,
+    int &max_depth,
+    int &nodes_expanded
 );
 
 #endif

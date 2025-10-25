@@ -1,8 +1,8 @@
 #ifndef BFS_H
 #define BFS_H
 
-#include <vector>
+#include "search_result.h"
 
-std::vector<int> bfs(int initial_state, int goal_state);
+SearchResult bfs(int initial_state, int goal_state);
 
 #endif

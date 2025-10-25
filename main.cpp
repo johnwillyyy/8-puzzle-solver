@@ -4,6 +4,7 @@
 #include "puzzle_utils.h"
 #include "bfs.h"
 #include "dfs.h"
+#include "a_star.h"
 
 
 void solve() {
@@ -14,7 +15,7 @@ void solve() {
 
     int encoded_init_state = encode(board);
     int encoded_goal_state = encode(goal);
-    std::vector<int> parent = dfs(encoded_init_state, encoded_goal_state);
+    std::vector<int> parent = a_star(encoded_init_state, encoded_goal_state, heuristic_euclidean);
     
     if (parent[encoded_goal_state] == -2) {
         std::cout << "no solution found";

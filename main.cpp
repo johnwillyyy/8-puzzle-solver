@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "puzzle_utils.h"
 #include "bfs.h"
+#include "dfs.h"
+
 
 void solve() {
     std::vector<std::vector<int>> board(3, std::vector<int>(3));
@@ -12,7 +14,7 @@ void solve() {
 
     int encoded_init_state = encode(board);
     int encoded_goal_state = encode(goal);
-    std::vector<int> parent = bfs(encoded_init_state, encoded_goal_state);
+    std::vector<int> parent = dfs(encoded_init_state, encoded_goal_state);
     
     if (parent[encoded_goal_state] == -2) {
         std::cout << "no solution found";
@@ -28,8 +30,10 @@ void solve() {
 
     std::reverse(path.begin(), path.end());
 
-    for (int state : path){
-        print_board(decode(state));
+    std::cout<<"cost: "<<path.size()-1<<'\n';
+    for (int i = 0; i < path.size(); i++){
+        std::cout<<"step "<<i<<'\n';
+        print_board(decode(path[i]));
         std::cout<<'\n';
     }
 }

@@ -21,8 +21,7 @@ std::vector<int> bfs(int initial_state, int goal_state) {
             return parent;
 
         for (int nb : get_neighbours(state)) {
-            if (visited[nb]) 
-                continue;
+            if (visited[nb]) continue;
             visited[nb] = true;
             parent[nb] = state;
             frontier.push(nb);

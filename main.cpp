@@ -5,6 +5,7 @@
 #include "puzzle_utils.h"
 #include "bfs.h"
 #include "dfs.h"
+#include "iddfs.h"
 #include "a_star.h"
 #include "search_result.h"
 
@@ -68,6 +69,13 @@ int main() {
     end = high_resolution_clock::now();
     dfs_result.runtime_ms = duration_cast<milliseconds>(end - start).count();
 
+    // IDDFS
+    start = high_resolution_clock::now();
+    SearchResult iddfs_result = iddfs(encoded_init_state, encoded_goal_state);
+    end = high_resolution_clock::now();
+    iddfs_result.runtime_ms = duration_cast<milliseconds>(end - start).count();
+
+
     // A* Manhattan
     start = high_resolution_clock::now();
     SearchResult astar_manhattan = a_star(encoded_init_state, encoded_goal_state, heuristic_manhattan);
@@ -83,6 +91,7 @@ int main() {
     // Print analyses
     print_analysis("Breadth-First Search (BFS)", bfs_result, encoded_goal_state);
     print_analysis("Depth-First Search (DFS)", dfs_result, encoded_goal_state);
+    print_analysis("Iterative Depening Depth-First Search (IDDFS)", iddfs_result, encoded_goal_state);
     print_analysis("A* (Manhattan Heuristic)", astar_manhattan, encoded_goal_state);
     print_analysis("A* (Euclidean Heuristic)", astar_euclidean, encoded_goal_state);
 

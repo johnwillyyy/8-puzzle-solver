@@ -30,7 +30,7 @@ string board_to_json(const vector<vector<int>>& board) {
 }
 
 void output_json_result(const string &algorithm, const SearchResult &result, int goal_state) {
-    if (result.parent[goal_state] == -2) {
+    if (result.parent[goal_state] == -1) {
         cout << "{\"error\":\"No solution found\",\"algorithm\":\"" << algorithm << "\"}\n";
         return;
     }

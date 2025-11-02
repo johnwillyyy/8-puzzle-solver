@@ -17,7 +17,7 @@ void print_analysis(const string &name, const SearchResult &result, int goal_sta
     cout << "Algorithm: " << name << "\n";
     cout << "=============================\n";
 
-    if (result.parent[goal_state] == -2) {
+    if (result.parent[goal_state] == -1) {
         cout << "No solution found.\n\n";
         return;
     }

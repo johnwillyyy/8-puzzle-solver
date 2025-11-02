@@ -8,101 +8,261 @@ class PuzzleGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("8-Puzzle Solver")
-        self.root.geometry("600x700")
+        self.root.geometry("1000x650")
+        self.root.configure(bg="#f0f0f0")
         
         self.current_step = 0
         self.solution_path = []
         
-        # Create main frames
-        self.create_input_frame()
-        self.create_board_frame()
-        self.create_controls_frame()
-        self.create_info_frame()
+        # Configure styles
+        self.setup_styles()
         
-    def create_input_frame(self):
-        input_frame = ttk.LabelFrame(self.root, text="Initial State Input", padding=10)
-        input_frame.pack(fill="x", padx=10, pady=5)
+        # Create main container with two columns
+        main_container = tk.Frame(self.root, bg="#f0f0f0")
+        main_container.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Grid for input
-        grid_frame = ttk.Frame(input_frame)
-        grid_frame.pack(side="left", padx=10)
+        # Left side - Board and controls
+        left_frame = tk.Frame(main_container, bg="#f0f0f0")
+        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
         
-        ttk.Label(grid_frame, text="Enter initial board (0 for blank):").grid(row=0, column=0, columnspan=3, pady=5)
+        # Right side - Input and info
+        right_frame = tk.Frame(main_container, bg="#f0f0f0", width=400)
+        right_frame.pack(side="right", fill="both", padx=(10, 0))
+        right_frame.pack_propagate(False)
+        
+        self.create_board_section(left_frame)
+        self.create_input_frame(right_frame)
+        self.create_info_frame(right_frame)
+        
+    def setup_styles(self):
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        # Configure button style
+        style.configure("Solve.TButton",
+                       font=("Arial", 12, "bold"),
+                       foreground="white",
+                       background="#4CAF50",
+                       borderwidth=0,
+                       focuscolor="none",
+                       padding=10)
+        style.map("Solve.TButton",
+                 background=[("active", "#45a049")])
+        
+        # Configure frame style
+        style.configure("Card.TFrame",
+                       background="white",
+                       relief="flat")
+        
+        # Configure label style
+        style.configure("Title.TLabel",
+                       font=("Arial", 14, "bold"),
+                       background="white",
+                       foreground="#333")
+        
+        style.configure("Subtitle.TLabel",
+                       font=("Arial", 11, "bold"),
+                       background="white",
+                       foreground="#666")
+    
+    def create_board_section(self, parent):
+        # Board frame with nice border
+        board_container = tk.Frame(parent, bg="white", highlightbackground="#ddd", 
+                                  highlightthickness=1)
+        board_container.pack(fill="both", expand=True)
+        
+        # Title
+        title = tk.Label(board_container, text="🧩 Puzzle Board", 
+                        font=("Arial", 16, "bold"), bg="white", fg="#333", pady=15)
+        title.pack()
+        
+        # Board with arrow controls container
+        board_with_controls = tk.Frame(board_container, bg="white")
+        board_with_controls.pack(expand=True, pady=20)
+        
+        # Left arrow
+        left_arrow_frame = tk.Frame(board_with_controls, bg="white")
+        left_arrow_frame.pack(side="left", padx=20)
+        
+        self.left_arrow = tk.Canvas(left_arrow_frame, width=60, height=60, 
+                                    bg="white", highlightthickness=0, cursor="hand2")
+        self.left_arrow.pack()
+        self.draw_arrow(self.left_arrow, "left", "disabled")
+        self.left_arrow.bind("<Button-1>", lambda e: self.previous_step())
+        
+        # Canvas for drawing the board
+        self.canvas = tk.Canvas(board_with_controls, width=400, height=400, 
+                               bg="white", highlightthickness=0)
+        self.canvas.pack(side="left")
+        
+        # Right arrow
+        right_arrow_frame = tk.Frame(board_with_controls, bg="white")
+        right_arrow_frame.pack(side="left", padx=20)
+        
+        self.right_arrow = tk.Canvas(right_arrow_frame, width=60, height=60, 
+                                     bg="white", highlightthickness=0, cursor="hand2")
+        self.right_arrow.pack()
+        self.draw_arrow(self.right_arrow, "right", "disabled")
+        self.right_arrow.bind("<Button-1>", lambda e: self.next_step())
+        
+        # Step counter below board
+        self.step_label = tk.Label(board_container, text="Step: 0 / 0", 
+                                   font=("Arial", 14, "bold"), bg="white", fg="#666", pady=15)
+        self.step_label.pack()
+    
+    def draw_arrow(self, canvas, direction, state="normal"):
+        canvas.delete("all")
+        
+        if state == "disabled":
+            fill_color = "#cccccc"
+            outline_color = "#aaaaaa"
+        else:
+            fill_color = "#4CAF50"
+            outline_color = "#2E7D32"
+        
+        if direction == "left":
+            # Left arrow
+            points = [45, 30, 20, 30, 20, 20, 5, 30, 20, 40, 20, 30]
+            canvas.create_polygon(points, fill=fill_color, outline=outline_color, width=2)
+        else:
+            # Right arrow
+            points = [15, 30, 40, 30, 40, 20, 55, 30, 40, 40, 40, 30]
+            canvas.create_polygon(points, fill=fill_color, outline=outline_color, width=2)
+    
+    def create_input_frame(self, parent):
+        input_container = tk.Frame(parent, bg="white", highlightbackground="#ddd", 
+                                  highlightthickness=1)
+        input_container.pack(fill="both", padx=0, pady=(0, 15))
+        
+        # Title
+        title = tk.Label(input_container, text="⚙️ Setup", 
+                        font=("Arial", 16, "bold"), bg="white", fg="#333", pady=15)
+        title.pack()
+        
+        content = tk.Frame(input_container, bg="white")
+        content.pack(fill="both", padx=20, pady=(0, 20))
+        
+        # Grid input section
+        ttk.Label(content, text="Initial Board State", style="Subtitle.TLabel").pack(anchor="w", pady=(0, 10))
+        
+        grid_frame = tk.Frame(content, bg="white")
+        grid_frame.pack(pady=(0, 20))
         
         self.entries = []
         for i in range(3):
+            row_frame = tk.Frame(grid_frame, bg="white")
+            row_frame.pack()
             row_entries = []
             for j in range(3):
-                entry = ttk.Entry(grid_frame, width=5, justify="center", font=("Arial", 14))
-                entry.grid(row=i+1, column=j, padx=2, pady=2)
+                entry = tk.Entry(row_frame, width=4, justify="center", 
+                               font=("Arial", 16, "bold"), bd=2, relief="solid",
+                               highlightbackground="#4CAF50", highlightthickness=1)
+                entry.pack(side="left", padx=3, pady=3)
                 row_entries.append(entry)
             self.entries.append(row_entries)
         
         # Set default solvable puzzle
-        default = [[1, 2, 3], [4, 0, 5], [7, 8, 6]]
+        default = [[1, 4, 2], [0, 3, 5], [6, 7, 8]]
         for i in range(3):
             for j in range(3):
                 self.entries[i][j].insert(0, str(default[i][j]))
         
         # Algorithm selection
-        algo_frame = ttk.Frame(input_frame)
-        algo_frame.pack(side="left", padx=20)
-        
-        ttk.Label(algo_frame, text="Select Algorithm:").pack(anchor="w")
+        ttk.Label(content, text="Select Algorithm", style="Subtitle.TLabel").pack(anchor="w", pady=(10, 10))
         
         self.algorithm = tk.StringVar(value="bfs")
         algorithms = [
-            ("Breadth-First Search", "bfs"),
-            ("Depth-First Search", "dfs"),
-            ("Iterative Deepening DFS", "iddfs"),
-            ("A* (Manhattan)", "astar_manhattan"),
-            ("A* (Euclidean)", "astar_euclidean")
+            ("BFS", "bfs", "Breadth-First Search"),
+            ("DFS", "dfs", "Depth-First Search"),
+            ("IDDFS", "iddfs", "Iterative Deepening DFS"),
+            ("A* (Manhattan)", "astar_manhattan", "A* with Manhattan Distance"),
+            ("A* (Euclidean)", "astar_euclidean", "A* with Euclidean Distance")
         ]
         
-        for text, value in algorithms:
-            ttk.Radiobutton(algo_frame, text=text, variable=self.algorithm, 
-                          value=value).pack(anchor="w")
+        self.algo_buttons = []
+        for short_text, value, tooltip in algorithms:
+            btn_frame = tk.Frame(content, bg="white", cursor="hand2")
+            btn_frame.pack(fill="x", pady=3)
+            
+            # Create custom radio button
+            radio_canvas = tk.Canvas(btn_frame, width=20, height=20, bg="white", 
+                                    highlightthickness=0)
+            radio_canvas.pack(side="left", padx=(0, 8))
+            
+            label = tk.Label(btn_frame, text=short_text, font=("Arial", 11), 
+                           bg="white", fg="#333", anchor="w")
+            label.pack(side="left", fill="x", expand=True)
+            
+            # Bind click events
+            for widget in [btn_frame, radio_canvas, label]:
+                widget.bind("<Button-1>", lambda e, v=value: self.select_algorithm(v))
+                # widget.bind("<Enter>", lambda e, f=btn_frame: f.configure(bg="#f5f5f5"))
+                # widget.bind("<Leave>", lambda e, f=btn_frame: f.configure(bg="white"))
+            
+            self.algo_buttons.append((btn_frame, radio_canvas, value))
+        
+        self.update_algorithm_selection()
         
         # Solve button
-        ttk.Button(algo_frame, text="Solve Puzzle", command=self.solve_puzzle, 
-                  style="Accent.TButton").pack(pady=10)
+        solve_btn = tk.Button(content, text="Solve Puzzle", 
+                            font=("Arial", 12, "bold"),
+                            bg="#4CAF50", fg="white", 
+                            activebackground="#45a049",
+                            activeforeground="white",
+                            bd=0, pady=12, cursor="hand2",
+                            command=self.solve_puzzle)
+        solve_btn.pack(fill="x", pady=(15, 0))
+        
+        # Add hover effect
+        solve_btn.bind("<Enter>", lambda e: solve_btn.configure(bg="#45a049"))
+        solve_btn.bind("<Leave>", lambda e: solve_btn.configure(bg="#4CAF50"))
     
-    def create_board_frame(self):
-        board_frame = ttk.LabelFrame(self.root, text="Puzzle Board", padding=10)
-        board_frame.pack(fill="both", expand=True, padx=10, pady=5)
-        
-        # Canvas for drawing the board
-        self.canvas = tk.Canvas(board_frame, width=400, height=400, bg="white")
-        self.canvas.pack()
-        
-    def create_controls_frame(self):
-        controls_frame = ttk.Frame(self.root)
-        controls_frame.pack(fill="x", padx=10, pady=5)
-        
-        self.prev_button = ttk.Button(controls_frame, text="← Previous", 
-                                      command=self.previous_step, state="disabled")
-        self.prev_button.pack(side="left", padx=5)
-        
-        self.step_label = ttk.Label(controls_frame, text="Step: 0 / 0", 
-                                    font=("Arial", 12, "bold"))
-        self.step_label.pack(side="left", expand=True)
-        
-        self.next_button = ttk.Button(controls_frame, text="Next →", 
-                                      command=self.next_step, state="disabled")
-        self.next_button.pack(side="right", padx=5)
+    def select_algorithm(self, value):
+        self.algorithm.set(value)
+        self.update_algorithm_selection()
     
-    def create_info_frame(self):
-        info_frame = ttk.LabelFrame(self.root, text="Solution Info", padding=10)
-        info_frame.pack(fill="x", padx=10, pady=5)
+    def update_algorithm_selection(self):
+        selected = self.algorithm.get()
+        for btn_frame, canvas, value in self.algo_buttons:
+            canvas.delete("all")
+            if value == selected:
+                # Draw filled circle with checkmark
+                canvas.create_oval(2, 2, 18, 18, fill="#4CAF50", outline="#2E7D32", width=2)
+                canvas.create_line(6, 10, 9, 13, width=2, fill="white")
+                canvas.create_line(9, 13, 14, 7, width=2, fill="white")
+                btn_frame.configure(bg="white")
+            else:
+                # Draw empty circle
+                canvas.create_oval(2, 2, 18, 18, fill="white", outline="#999", width=2)
+                btn_frame.configure(bg="white")
+    
+    def create_info_frame(self, parent):
+        info_container = tk.Frame(parent, bg="white", highlightbackground="#ddd", 
+                                 highlightthickness=1)
+        info_container.pack(fill="both", expand=True)
         
-        self.info_text = tk.Text(info_frame, height=4, wrap="word", font=("Arial", 10))
-        self.info_text.pack(fill="x")
+        # Title
+        title = tk.Label(info_container, text="📊 Solution Info", 
+                        font=("Arial", 16, "bold"), bg="white", fg="#333", pady=15)
+        title.pack()
+        
+        # Info text
+        self.info_text = tk.Text(info_container, height=6, wrap="word", 
+                                font=("Arial", 11), bg="white", fg="#333",
+                                bd=0, padx=20, pady=10)
+        self.info_text.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        self.info_text.config(state="disabled")
+        
+        # Initial message
+        self.info_text.config(state="normal")
+        self.info_text.insert(1.0, "Enter an initial board state and select an algorithm to solve the puzzle.\n\nClick 'Solve Puzzle' to begin.")
         self.info_text.config(state="disabled")
     
     def draw_board(self, board):
         self.canvas.delete("all")
         cell_size = 120
         margin = 20
+        corner_radius = 10
         
         for i in range(3):
             for j in range(3):
@@ -111,18 +271,43 @@ class PuzzleGUI:
                 x2 = x1 + cell_size
                 y2 = y1 + cell_size
                 
-                # Draw cell
+                # Draw rounded rectangle
                 if board[i][j] == 0:
                     # Blank cell
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#e0e0e0", 
-                                                outline="#999")
+                    self.draw_rounded_rect(self.canvas, x1+2, y1+2, x2-2, y2-2, 
+                                          corner_radius, fill="#e0e0e0", outline="#bbb", width=2)
                 else:
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#4CAF50", 
-                                                outline="#2E7D32", width=2)
+                    # Numbered cell with gradient effect
+                    self.draw_rounded_rect(self.canvas, x1+2, y1+2, x2-2, y2-2, 
+                                          corner_radius, fill="#4CAF50", outline="#2E7D32", width=3)
+                    
+                    # Add subtle shadow effect
+                    self.canvas.create_text((x1 + x2) / 2 + 2, (y1 + y2) / 2 + 2, 
+                                          text=str(board[i][j]), 
+                                          font=("Arial", 40, "bold"), 
+                                          fill="#2E7D32")
+                    
                     self.canvas.create_text((x1 + x2) / 2, (y1 + y2) / 2, 
                                           text=str(board[i][j]), 
-                                          font=("Arial", 36, "bold"), 
+                                          font=("Arial", 40, "bold"), 
                                           fill="white")
+    
+    def draw_rounded_rect(self, canvas, x1, y1, x2, y2, radius, **kwargs):
+        points = [
+            x1+radius, y1,
+            x2-radius, y1,
+            x2, y1,
+            x2, y1+radius,
+            x2, y2-radius,
+            x2, y2,
+            x2-radius, y2,
+            x1+radius, y2,
+            x1, y2,
+            x1, y2-radius,
+            x1, y1+radius,
+            x1, y1
+        ]
+        return canvas.create_polygon(points, smooth=True, **kwargs)
     
     def solve_puzzle(self):
         # Get board from entries
@@ -194,10 +379,20 @@ class PuzzleGUI:
         self.info_text.config(state="normal")
         self.info_text.delete(1.0, tk.END)
         
-        info = f"Algorithm: {data['algorithm']}\n"
-        info += f"Cost: {data['cost']} moves\n"
-        info += f"Nodes Expanded: {data['nodes_expanded']}\n"
-        info += f"Runtime: {data['runtime_ms']} ms"
+        algo_names = {
+            "bfs": "Breadth-First Search",
+            "dfs": "Depth-First Search", 
+            "iddfs": "Iterative Deepening DFS",
+            "astar_manhattan": "A* (Manhattan Distance)",
+            "astar_euclidean": "A* (Euclidean Distance)"
+        }
+        
+        info = f"Algorithm: {algo_names.get(data['algorithm'], data['algorithm'])}\n\n"
+        info += f"✓ Solution found!\n"
+        info += f"• Cost: {data['cost']} moves\n"
+        info += f"• Nodes Expanded: {data['nodes_expanded']:,}\n"
+        info += f"• Search Depth: {data['search_depth']:,}\n"
+        info += f"• Runtime: {data['runtime_ms']} ms"
         
         self.info_text.insert(1.0, info)
         self.info_text.config(state="disabled")
@@ -216,22 +411,28 @@ class PuzzleGUI:
     
     def update_buttons(self):
         if not self.solution_path:
-            self.prev_button.config(state="disabled")
-            self.next_button.config(state="disabled")
+            self.draw_arrow(self.left_arrow, "left", "disabled")
+            self.draw_arrow(self.right_arrow, "right", "disabled")
             self.step_label.config(text="Step: 0 / 0")
+            self.left_arrow.config(cursor="arrow")
+            self.right_arrow.config(cursor="arrow")
             return
         
         self.step_label.config(text=f"Step: {self.current_step + 1} / {len(self.solution_path)}")
         
         if self.current_step <= 0:
-            self.prev_button.config(state="disabled")
+            self.draw_arrow(self.left_arrow, "left", "disabled")
+            self.left_arrow.config(cursor="arrow")
         else:
-            self.prev_button.config(state="normal")
+            self.draw_arrow(self.left_arrow, "left", "normal")
+            self.left_arrow.config(cursor="hand2")
         
         if self.current_step >= len(self.solution_path) - 1:
-            self.next_button.config(state="disabled")
+            self.draw_arrow(self.right_arrow, "right", "disabled")
+            self.right_arrow.config(cursor="arrow")
         else:
-            self.next_button.config(state="normal")
+            self.draw_arrow(self.right_arrow, "right", "normal")
+            self.right_arrow.config(cursor="hand2")
 
 if __name__ == "__main__":
     root = tk.Tk()
